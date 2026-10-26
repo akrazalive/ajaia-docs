@@ -3,7 +3,7 @@
 **Candidate:** Asaf Khan Raza  
 **Live app:** https://ajaia-docs-85m9.onrender.com  
 **Source repo:** https://github.com/akrazalive/ajaia-docs  
-**Walkthrough video:** `<VIDEO_URL>` (also in `VIDEO_URL.txt`)  
+**Walkthrough video:** https://www.loom.com/share/0e8bf7a0a47b40238c3c2743b8b4bbe1 (also in `VIDEO_URL.txt`)  
 **Demo logins:** `alice@ajaia.dev`, `bob@ajaia.dev`, `carol@ajaia.dev`. The password for all three is `ajaia-demo`.
 
 ## What's included

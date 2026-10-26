@@ -2,7 +2,7 @@
 
 A lightweight collaborative document editor: create and format documents, import files, share them with teammates as viewers or editors, and pick up each other's changes.
 
-**Live app:** https://ajaia-docs-85m9.onrender.com · **Walkthrough:** see [VIDEO_URL.txt](VIDEO_URL.txt)
+**Live app:** https://ajaia-docs-85m9.onrender.com · **Walkthrough video:** https://www.loom.com/share/0e8bf7a0a47b40238c3c2743b8b4bbe1
 
 ## Demo accounts
 
