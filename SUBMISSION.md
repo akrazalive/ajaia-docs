@@ -1,7 +1,8 @@
 # Submission: Ajaia Docs (Full Stack Product Engineer take-home)
 
 **Candidate:** Asaf Khan Raza
-**Live app:** `<LIVE_URL>`
+**Live app:** https://ajaia-docs-85m9.onrender.com
+**Source repo:** https://github.com/akrazalive/ajaia-docs  
 **Walkthrough video:** `<VIDEO_URL>` (also in `VIDEO_URL.txt`)
 **Demo logins:** `alice@ajaia.dev`, `bob@ajaia.dev`, `carol@ajaia.dev`. The password for all three is `ajaia-demo`.
 
