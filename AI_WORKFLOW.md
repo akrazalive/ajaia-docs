@@ -1,33 +1,48 @@
 # AI workflow note
 
-> **Draft. Review and edit this so it reflects your own experience before submitting.**
-
 ## Tools used
 
-- **Claude Code** (Anthropic, Claude Opus) in VS Code. I used it to scaffold the project, write most of the first-pass code, run tests, and drive the app in a browser for verification.
-- **Claude in Chrome** for end-to-end clicking through flows and taking screenshots during verification.
+- **Claude Code** (Anthropic, Claude Opus) running as an agent inside VS Code. It planned the build, wrote the code, ran the tests, and made the git commits.
+- **Claude in Chrome**, which Claude Code used to drive a real browser: clicking through the app locally and on the live deployment, taking screenshots, and setting up the Render Blueprint.
+- **GitHub CLI** and **Render**, for the repo and the hosting.
 
-## Where AI materially sped things up
+I treated the AI as a fast implementer working to my brief. I set the product direction, design constraints and release decisions, and every claim in this submission was checked by running the app or the tests.
 
-- **Scaffolding and boilerplate:** the Express routes, fetch wrapper, React pages and CSS design tokens. This took minutes instead of hours.
-- **Library surface area:** TipTap v3 API details (StarterKit now bundles Underline and Link, Placeholder moved to `@tiptap/extensions`, `useEditorState` for toolbar state), plus `mammoth` and `node:sqlite` usage.
-- **Test writing:** turning the access-control rules into a dense table of supertest assertions, then running the whole suite against a second storage driver.
+## Where AI materially sped up the work
 
-## What I changed or rejected
+- **Going from brief to a working full-stack slice in one session.** That covered the Express API, the React and TipTap editor, the storage layer, the seed data, and the docs. Without AI this is easily several days of work. Here the time went into deciding and verifying rather than typing.
+- **Library details.** TipTap v3 has changed from earlier versions: StarterKit now includes Underline and Link, Placeholder moved to `@tiptap/extensions`, and toolbar state comes from `useEditorState`. The agent checked the installed packages instead of guessing from memory. It did the same with Node 24's built-in `node:sqlite` and with `mammoth` for .docx files.
+- **Tests.** It turned the access rules into dense integration tests, then ran the whole suite against a second database driver.
+- **Deployment.** It wrote the Render Blueprint (`render.yaml`), created the GitHub repo, deployed, and smoke-tested the live API and UI.
 
-- **Scope.** I rejected real-time CRDT collaboration (Yjs) as too much infrastructure for the timebox. I chose optimistic versioning with a conflict banner instead, which shows the same product thinking (never silently lose data) at a fraction of the risk.
-- **A bug in generated code:** the editor called `setEditable(...)` on load. That emits an `update` event by default, so **view-only users saw "Unsaved changes"** and a background save was attempted. I caught it during browser testing and fixed it by passing `emitUpdate = false`.
-- **Portability:** the first version of the document-list query used a correlated subquery for share counts. Running the suite against Postgres (pg-mem) failed on it, so I rewrote it as a grouped `LEFT JOIN` that works on both drivers.
-- **UI details:** a CSS selector that was too broad stretched the avatars on the login screen. I spotted it in a screenshot and narrowed the selector.
-- **Status codes:** I changed "no access" responses from 403 to 404 so that a document's existence isn't leaked.
+## Decisions I made, and AI output I changed or rejected
 
-## How I verified correctness, UX and reliability
+- **Design direction.** I asked for a clean, professional look: blended neutral colors, no gradients, small buttons, refined typography and relevant icons. The result is warm paper neutrals with one deep-green accent, Newsreader and Instrument Sans fonts, and Lucide icons.
+- **Scope.** We rejected real-time CRDT co-editing (Yjs plus WebSockets) as too much infrastructure for the timebox. Instead we used **optimistic versioning with a conflict banner**. It has the same core guarantee, never silently losing someone's work, at a fraction of the risk.
+- **Bugs found by testing the AI's own output:**
+  - **View-only users saw "Unsaved changes."** The editor called TipTap's `setEditable()`, which fires an update event by default, so read-only documents were marked as edited and tried to save in the background. This was caught in the browser while signed in as a viewer, and fixed by turning that event off.
+  - **A query that only worked on SQLite.** The first document-list query used a correlated subquery. When the suite ran against Postgres (emulated with `pg-mem`), three tests failed, so the query was rewritten as a grouped `LEFT JOIN` that works on both.
+  - **Visual bugs from screenshots.** For example, an over-broad CSS selector stretched the avatars on the login screen.
+- **Security choices.**
+  - "No access" returns 404 rather than 403, so document IDs can't be probed.
+  - All HTML is sanitized on the server, for both editor saves and file imports. Relying on the editor's own filtering wasn't enough.
+- **Deployment.** I chose to make the repo public, which let Render deploy it from the public URL without me granting Render access to my GitHub account.
 
-- **Automated:** 11 integration tests covering auth, CRUD, sanitization, conflict (409 and force), role enforcement, share validation, and .md/.txt/.docx import. Each runs on **both SQLite and Postgres**, for 22 passing tests in total.
-- **Manual end-to-end in a real browser:**
+## How correctness, UX and reliability were verified
+
+- **Automated tests:** 11 integration tests (supertest) run against **both SQLite and Postgres**, so 22 pass in total. They cover:
+  - authentication, including a forged session cookie
+  - creating, renaming and editing documents, and reopening them with formatting intact
+  - HTML sanitization
+  - stale saves rejected with 409, plus the forced overwrite
+  - each step of access: none → viewer → editor → revoked
+  - validation of share requests
+  - importing .md, .txt and .docx files, and rejecting bad files
+- **End-to-end in a real browser, locally:**
   - signed in as each seeded user
-  - edited and formatted text, and confirmed the saved HTML through the API
+  - formatted text, then read the saved HTML back through the API
   - shared a document with Carol as a viewer and confirmed the read-only UI
-  - triggered a real conflict by saving as Alice through the API while typing as Bob, then resolved it
-  - imported a generated .docx and checked that headings, bold, italic and lists came through
-- **Review:** I read every generated file before accepting it, with particular attention to the permission checks in `access.js`, the SQL in `routes/documents.js`, and the save and conflict state machine in `Editor.jsx`.
+  - caused a real conflict (Alice saving through the API while Bob typed), then resolved it
+  - imported a generated .docx and confirmed headings, bold, italic and lists came through
+- **On the live deployment:** checked the health endpoint (showing the Postgres driver), signed in, listed documents, and edited and autosaved in the browser, then reverted that test edit.
+- **What wasn't verified:** I didn't do a full visual check of the phone layout. The responsive CSS exists but wasn't screenshot-tested.
